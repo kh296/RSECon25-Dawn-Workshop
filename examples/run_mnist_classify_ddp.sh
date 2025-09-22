@@ -108,6 +108,10 @@ MASTER_ADDR=$(head -n1 mpi_hostfile.txt)
 
 echo "==== Step: mpiexec start ===="
 
+echo
+echo "Checking/downloading dataset"
+python -c "import torchvision as tv; tv.datasets.MNIST('data', download=True)"
+
 read -r -d "" CMD << EOS
 mpiexec -n $WORLD_SIZE -ppn $SLURM_NTASKS_PER_NODE -f mpi_hostfile.txt\
  python mnist_classify_ddp.py\
