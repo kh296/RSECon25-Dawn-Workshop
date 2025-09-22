@@ -1,5 +1,5 @@
-# Install area (used to collect scripts for environment setup).
-install/
+# Ignore directory used to collect scripts for environment setup.
+envs/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

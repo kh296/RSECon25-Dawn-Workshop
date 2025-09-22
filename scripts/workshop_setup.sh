@@ -3,8 +3,8 @@
 WORKSHOP_RDS="${HOME}/rds/rds-rsecon/kh296"
 
 # Copyt setup scripts.
-mkdir -p ../install
-cp ${WORKSHOP_RDS}/install/*setup.sh ../install
+mkdir -p ../envs
+cp ${WORKSHOP_RDS}/install/*setup.sh ../envs
 
 # Link to shared miniforge3 directory.
 rm -rf ~/miniforge3
