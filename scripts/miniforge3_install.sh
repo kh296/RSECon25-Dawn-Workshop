@@ -16,14 +16,14 @@
 # or it may be run on the Slurm batch system:
 # sbatch --acount=<project account> ./miniforge3_install.sh
 
+# Exit at first failure.
+set -e
+
 # Start timer.
 T0=${SECONDS}
 CONDA_ENV="Miniforge3"
 echo "Installation of ${CONDA_ENV} started on $(hostname): $(date)"
 echo ""
-
-# Exit at first failure.
-set -e
 
 # Delete any existing conda installation,
 # and link default top-level location to user subdirectory of rds-rsecon.

@@ -9,6 +9,9 @@
 # Script for installing MLvenv environment for practical-ml-with-pytorch
 # on Dawn supercomputer.
 
+# Exit at first failure.
+set -e
+
 T0=${SECONDS}
 ENV_NAME="MLvenv"
 PROJ_NAME="practical-ml-with-pytorch"
@@ -34,7 +37,7 @@ module load intelpython-conda/2025.0
 VENV_DIR=$(pwd)/${ENV_NAME}
 rm -rf ${VENV_DIR}
 python -m venv --system-site-packages ${VENV_DIR}
-sed -i "s@${HOME}@source \${HOME}@g" ${VENV_DIR}/bin/activate
+sed -i "s@${HOME}@\${HOME}@g" ${VENV_DIR}/bin/activate
 source "${VENV_DIR}/bin/activate"
 echo "\${HOME}/${ENV_NAME}/bin/activate" >> ${SETUP}
 pip install --upgrade pip
@@ -46,11 +49,14 @@ cd ${PROJ_NAME}
 git checkout xpu
 pip install --index-url https://download.pytorch.org/whl/xpu --extra-index-url https://pypi.org/simple . ipywidgets
 
-# Allow group same non-write permissions as user.
-chmod -R g=u-w ${VENV_DIR}
+# Perform initial import.
+python -c "import ml_workshop"
 
 # Create Jupyter kernel.
 python -m ipykernel install --user --name=${PROJ_NAME}
+
+# Allow group same non-write permissions as user.
+chmod -R g=u-w ${VENV_DIR}
 
 echo ""
 echo "${ENV_NAME} installation for ${PROJ_NAME} completed: $(date)"

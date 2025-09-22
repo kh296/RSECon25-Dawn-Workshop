@@ -12,9 +12,10 @@
 # creating conflicts.  Only limited functionality of the installed
 # frameworks has been tested.
 #
-# This installation relies on the user having a miniforge installation
-# at ~/miniforge3/bin/activate.  For instruction for installing miniforge, see:
-# https://conda-forge.org/download/
+# This installation relies on the user having a conda installation
+# at ${CONDA_HOME}/bin/activate.  If not set by the user, CONDA_HOME
+# defaults to ${HOME}/miniforge3.  For instructions for installing
+# the miniforge3 flagour of conda, see: https://conda-forge.org/download/
 #
 # After installation, the environment for running lightning applications
 # can be activated by sourcing the file ai-setup.sh, created
@@ -26,10 +27,25 @@
 # or it may be run on the Slurm batch system:
 # sbatch --acount=<project account> ./ai_install.sh
 
+# Exit at first failure.
+set -e
+
 T0=${SECONDS}
 ENV_NAME="ai"
 SOFTWARE="AI frameworks"
 echo "Installation of ${SOFTWARE} started: $(date)"
+if [ -z "${CONDA_HOME}" ]; then
+    if [ -z "${CONDA_PREFIX}" ]; then
+        CONDA_HOME=${HOME}/miniforge3
+    else
+        CONDA_HOME=${CONDA_PREFIX}
+    fi
+fi
+
+if ! [ -d "${CONDA_HOME}" ]; then
+    echo "Conda installation not found at '${CONDA_HOME}' - exiting"
+    exit
+fi
 
 # Create script for environment setup.
 cat <<EOF >${ENV_NAME}-setup.sh
@@ -42,7 +58,7 @@ module load intel-oneapi-mkl
 module load intel-oneapi-compilers
 
 # Initialise conda.
-source ~/miniforge3/bin/activate
+source $(realpath ${CONDA_HOME})/bin/activate
 
 # Activate environment.
 EOF
@@ -78,38 +94,63 @@ channels:
 dependencies:
   - intelpython3_full
 #  - level-zero
-  - python=3.11
+  - python=3.12
   - pip
   - pip:
     - --index-url https://download.pytorch.org/whl/xpu
     - --extra-index-url https://pypi.org/simple
 #    - tensorflow==2.15.0
 #    - intel-extension-for-tensorflow[xpu]
-    - lightning[extra]
-    - litmodels
+# Package for IPython kernel creation.
+    - ipykernel
+# PyTorch
     - torch==2.8.0
     - torchaudio==2.8.0
     - torchvision==0.23.0
+# Lightning
+    - lightning[extra]
+    - litmodels
     - git+https://gitlab.developers.cam.ac.uk/kh296/lightning-xpu#egg=lightning_xpu
+# JAX
+    - intel-extension-for-openxla
+    - -r https://raw.githubusercontent.com/intel/intel-extension-for-openxla/main/test/requirements.txt
 EOF
 
-conda env remove -n ${ENV_NAME} -y
+if [ -d "${CONDA_HOME}/envs/${ENV_NAME}" ]; then
+    echo ""
+    echo "Removing existing environment: ${ENV_NAME}."
+    conda env remove -n ${ENV_NAME} -y
+fi
+echo ""
+echo "Creating environment: ${ENV_NAME}."
 conda env create -f ${ENV_NAME}.yml
 CMD="conda activate ${ENV_NAME}"
-echo ${CMD} >> ${ENV_NAME}-setup.sh
-${CMD}
+echo "${CMD}" >> "${ENV_NAME}-setup.sh"
+eval "${CMD}"
 python -m pip install --upgrade pip
 # Installing JAX last seems to be best way of avoiding conflicts.
 # Needs more checking.
-python -m pip install intel-extension-for-openxla
-python -m pip install -r https://raw.githubusercontent.com/intel/intel-extension-for-openxla/main/test/requirements.txt
+#python -m pip install intel-extension-for-openxla
+#python -m pip install -r https://raw.githubusercontent.com/intel/intel-extension-for-openxla/main/test/requirements.txt
 
-# Allow group same non-write permissions as user.
-chmod -R g=u-w ~/miniforge3/envs/ai
+CMD="python -c 'import lightning_xpu; import lightning; import litmodels; import torch; import torchvision; import torchaudio; import jax'"
+echo ""
+echo "Performing initial imports:"
+echo "${CMD}"
+eval "${CMD}"
 
-# Create Jupyter kernel.
-pip install ipykernel
-python -m ipykernel install --user --name=${ENV_NAME}
+CMD="python -m ipykernel install --user --name=${ENV_NAME}"
+echo ""
+echo "Creating Jupyter kernel:"
+echo "${CMD}"
+eval "${CMD}"
 
+CMD="chmod -R g=u-w ${CONDA_HOME}/envs/ai"
+echo ""
+echo "Setting group permissions:"
+echo "${CMD}"
+eval "${CMD}"
+
+echo ""
 echo "${SOFTWARE} installation completed: $(date)"
 echo "Installation time: $((${SECONDS}-${T0})) seconds"
