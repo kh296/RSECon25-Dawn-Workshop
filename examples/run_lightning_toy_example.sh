@@ -10,7 +10,7 @@
 #
 # It's assumed that the environment for running lightning applications
 # can be set up with:
-# source ../install/ai-setup.sh
+# source ../envs/ai-setup.sh
 #
 # This script can be run interactively:
 #     ./run_lightning_toy_example.sh
@@ -45,7 +45,7 @@ unset SLURM_MEM_PER_NODE
 SLURM_EXPORT_ENV=ALL
 
 # Perform environment setup.
-SETUP_SCRIPT="../install/ai-setup.sh"
+SETUP_SCRIPT="../envs/ai-setup.sh"
 SETUP="source ${SETUP_SCRIPT}"
 echo ${SETUP}
 ${SETUP}

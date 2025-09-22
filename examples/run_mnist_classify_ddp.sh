@@ -28,7 +28,7 @@ unset SLURM_MEM_PER_NODE
 ########################
 # 1. Load Environment
 ########################
-source ../install/ai-setup.sh
+source ../envs/ai-setup.sh
 
 echo "==== Step: Python / mpiexec version check ===="
 echo "Which python: $(which python)"
