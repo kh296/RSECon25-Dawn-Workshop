@@ -32,7 +32,7 @@ On the Jupyter Notebook form enter:
 - Number of hours: 2
 - Number of cores: 1
 - Number of GPUs: 2
-- Modules: intel-oneapi-mkl intel-oneapi-compilers jupyterlab
+- Modules: rhel9/default-dawn intel-oneapi-mkl intel-oneapi-compilers jupyterlab
 - Number of nodes: 1
 ```
 The above request the resources needed for this workshop, for a period of
