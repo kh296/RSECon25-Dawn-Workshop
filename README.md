@@ -82,7 +82,7 @@ sbatch --account=training-dawn-gpu run_lightning_toy_example.sh
 
 On the Jupyter page, select:
 ```
-View &#8593; Open JupyterLab
+View &rarr; Open JupyterLab
 ```
 ### 6.1 Check devices
 
