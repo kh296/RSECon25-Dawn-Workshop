@@ -7,11 +7,11 @@ is a supercomputer hosted at the University of Cambridge, and is part
 of the [AI Resource Research (AIRR)](https://www.gov.uk/government/publications/ai-research-resource/airr-advanced-supercomputers-for-the-uk).  It has
 256 nodes, in the form of [Dell PowerEdge XE9640](https://www.delltechnologies.com/asset/en-us/products/servers/technical-support/poweredge-xe9640-spec-sheet.pdf) servers.  Each node consists of:
 2 CPUs ([Intel Xeon Platinum 8468](https://www.intel.com/content/www/us/en/products/sku/231735/intel-xeon-platinum-8468-processor-105m-cache-2-10-ghz/specifications.html)), each with 48 cores and 512 GiB RAM;
-4GPUs ([Intel Data Centre GPU Max 1550](https://www.intel.com/content/www/us/en/products/sku/232873/intel-data-center-gpu-max-1550/specifications.html),
+4GPUs ([Intel Data Centre GPU Max 1550](https://www.intel.com/content/www/us/en/products/sku/232873/intel-data-center-gpu-max-1550/specifications.html)),
 each with two stacks, 1024 compute units, and 128 GiB RAM.
 
 To install and run software from this workshop on Dawn, you
-will need to have been granted access.  For further information, see:
+will need to have an account set up.  For further information, see:
 [Access to Dawn](https://www.csd3.cam.ac.uk/index.php/access-dawn).
 
 ## 2. Software installation
