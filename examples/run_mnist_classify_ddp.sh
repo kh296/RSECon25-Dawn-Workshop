@@ -22,7 +22,7 @@ T1=${SECONDS}
 echo "Job start on $(hostname): $(date)"
 
 # Exit at first failure.
-set -e
+#set -e
 
 # Ensure that Slurm environment variables are set,
 # also if outside of a Slurm environment.
@@ -89,7 +89,11 @@ unset SLURM_MEM_PER_NODE
 SLURM_EXPORT_ENV=ALL
 
 # Perform environment setup.
-source ../envs/ai-setup.sh
+SETUP_SCRIPT="../envs/ai-setup.sh"
+SETUP="source ${SETUP_SCRIPT}"
+echo ""
+echo ${SETUP}
+${SETUP}
 
 # Set Intel MPI/OFI related environment variables.
 
@@ -120,17 +124,25 @@ export CCL_WORKER_OFFLOAD=1
 #export CCL_ZE_IPC_EXCHANGE=sockets
 export CCL_ZE_IPC_EXCHANGE=pidfd
 
-echo
+# Ensure that data needed are downloaded before running application.
+echo ""
 echo "Checking/downloading dataset"
+T3=${SECONDS}
 python -c "import torchvision as tv; tv.datasets.MNIST('data', download=True)"
+echo "Time checking/downloading dataset: $((${SECONDS}-${T3})) seconds"
 
 # Generate file of host names.
 scontrol show hostnames $SLURM_JOB_NODELIST > mpi_hostfile.txt
+echo ""
+echo "Node(s) used:"
+cat mpi_hostfile.txt
 
-read -r -d "" CMD << EOS
-mpiexec -n ${SLURM_NTASKS} -ppn $SLURM_NTASKS_PER_NODE -f mpi_hostfile.txt\
+# Exclamation mark used to avoid exiting
+# because read reaching end of stream results in non-zero return code.
+! read -r -d "" CMD << EOS
+mpiexec -n ${SLURM_NTASKS} -ppn ${SLURM_NTASKS_PER_NODE} -f mpi_hostfile.txt\
  python mnist_classify_ddp.py\
- --ntasks-per-node $SLURM_NTASKS_PER_NODE
+ --ntasks-per-node ${SLURM_NTASKS_PER_NODE}\
  --dist-url $(head -n1 mpi_hostfile.txt)\
  --dist-port $(( (SLURM_JOB_ID % 10000) + 50000 ))\
  --cpus-per-task ${SLURM_CPUS_PER_TASK}\
@@ -140,5 +152,3 @@ echo
 echo "${CMD}"
 echo
 ${CMD}
-
-echo "==== Step: mpiexec done ===="
