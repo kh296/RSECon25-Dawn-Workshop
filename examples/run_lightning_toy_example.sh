@@ -14,8 +14,9 @@
 #
 # This script can be run interactively:
 #     ./run_lightning_toy_example.sh
-# or can be submitted to a Slurm batch system.
-#     sbatch run_lightning_toy_example.sh
+# or can be submitted to a Slurm batch system, substituting
+# valid project account for <project_account>:
+#     sbatch --account=<project_account> run_lightning_toy_example.sh
 T1=${SECONDS}
 echo "Job start on $(hostname): $(date)"
 
