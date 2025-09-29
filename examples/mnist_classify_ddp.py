@@ -111,7 +111,7 @@ def main():
                         '; -1 for number of tasks equal to number of GPUs')
     parser.add_argument('--dist-url', default='127.0.0.1', type=str,
                         help='url used to set up distributed training')
-    parser.add_argument('--dist-port', default='29500', type=str,
+    parser.add_argument('--dist-port', default='55100', type=str,
                         help='url port used to set up distributed training')
     parser.add_argument('--cpus-per-task', default=1, type=int,
                         help='number of CPUs per task')
