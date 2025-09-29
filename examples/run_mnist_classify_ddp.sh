@@ -22,7 +22,7 @@ T1=${SECONDS}
 echo "Job start on $(hostname): $(date)"
 
 # Exit at first failure.
-#set -e
+set -e
 
 # Ensure that Slurm environment variables are set,
 # also if outside of a Slurm environment.
@@ -137,8 +137,8 @@ echo ""
 echo "Node(s) used:"
 cat mpi_hostfile.txt
 
-# Exclamation mark used to avoid exiting
-# because read reaching end of stream results in non-zero return code.
+# Exclamation mark used to avoid forced exit (with set -e)
+# when read reaches end of stream (non-zero return code).
 ! read -r -d "" CMD << EOS
 mpiexec -n ${SLURM_NTASKS} -ppn ${SLURM_NTASKS_PER_NODE} -f mpi_hostfile.txt\
  python mnist_classify_ddp.py\
