@@ -4,6 +4,12 @@ projects/
 venvs/
 *.yml
 
+# Ignore directories and files created when running examples.
+examples/MNIST/
+examples/data/
+examples/lightning_logs/
+examples/mpi_hostfile.txt
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[codz]
