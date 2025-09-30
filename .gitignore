@@ -1,5 +1,8 @@
-# Ignore directory used to collect scripts for environment setup.
+# Ignore directories and files created during software installation.
 envs/
+projects/
+venvs/
+*.yml
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

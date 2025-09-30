@@ -1,10 +1,10 @@
 #/bin/bash
 # Script for copying workshop setup scripts and kernels.
-WORKSHOP_RDS="${HOME}/rds/rds-rsecon/kh296"
+WORKSHOP_RDS="${HOME}/rds/rds-rsecon/rsecon25-dawn-workshop"
 
 # Copyt setup scripts.
 mkdir -p ../envs
-cp ${WORKSHOP_RDS}/install/*setup.sh ../envs
+cp ${WORKSHOP_RDS}/envs/*setup.sh ../envs
 
 # Link to shared miniforge3 directory.
 rm -rf ~/miniforge3

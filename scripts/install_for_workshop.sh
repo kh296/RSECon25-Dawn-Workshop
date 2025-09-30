@@ -15,10 +15,9 @@ WORKSHOP_HOME=$(cd $(dirname "$0")/..; pwd)
 if [[ ${WORKSHOP_HOME} == /var/spool/* ]]; then
     WORKSHOP_HOME=$(dirname $(pwd))
 fi
-USER_RDS=${HOME}/rds/rds-rsecon/$(whoami)
+USER_RDS=${HOME}/rds/rds-rsecon/rsecon25-dawn-workshop
 rm -rf ${USER_RDS}
 mkdir -p ${USER_RDS}
-chmod g-w ${USER_RDS}
 
 SCRIPTS_HOME=${WORKSHOP_HOME}/scripts
 INSTALL_RDS=${USER_RDS}/install
@@ -46,3 +45,10 @@ for INSTALL_SCRIPT in ${INSTALL_SCRIPTS}; do
     echo ""
     ./${INSTALL_SCRIPT}
 done
+
+# Allow group access to installation.
+CMD="chmod -R g=u-w ${USER_RDS}"
+echo ""
+echo "Setting group permissions:"
+echo "${CMD}"
+eval "${CMD}"
