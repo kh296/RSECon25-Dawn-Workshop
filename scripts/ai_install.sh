@@ -68,10 +68,12 @@ ENV_NAME="ai"
 ENVS_DIR=$(realpath ..)/envs
 mkdir -p ${ENVS_DIR}
 SETUP="${ENVS_DIR}/${ENV_NAME}-setup.sh"
+DAWN_SETUP="/dev/null"
+MACOS_SETUP="/dev/null"
 if [[ "Dawn" == "${SYSTEM}" ]]; then
     DAWN_SETUP="${SETUP}"
-else
-    DAWN_SETUP="/dev/null"
+elif [[ "macOS" == "${SYSTEM}" ]]; then
+    MACOS_SETUP="${SETUP}"
 fi
 
 cat <<EOF >${SETUP}
@@ -86,6 +88,42 @@ module purge
 module load rhel9/default-dawn
 module load intel-oneapi-mkl
 module load intel-oneapi-compilers
+
+# Set Intel MPI/OFI related environment variables.
+
+# export I_MPI_OFFLOAD=1
+# export I_MPI_OFFLOAD_SYMMETRIC=0
+
+# See: https://www.osc.edu/supercomputing/batch-processing-at-osc/slurm_migration/slurm_migration_issues
+unset I_MPI_PMI_LIBRARY
+export I_MPI_JOB_RESPECT_PROCESS_PLACEMENT=0
+
+# Avoid CCL warning:
+# [CCL_WARN] CCL_CONFIGURATION_PATH_modshare=:1 is unknown to and unused by
+# oneCCL code but is present in the environment, check if it is not mistyped.
+unset CCL_CONFIGURATION_PATH_modshare
+
+# Avoid CCL warnings:
+# |CCL_WARN| the number of workers (1) matches the number of available cores
+# per process, this may lead to contention between workers and application
+# threads
+# |CCL_WARN| workers are disabled, to forcibly enable them
+# set CCL_WORKER_OFFLOAD=1
+#
+# Note: setting CCL_WORKER_OFFLOAD=1 may slow down processing.
+export CCL_WORKER_OFFLOAD=1
+
+# Use sockets instead of drmfd.
+# See: https://uxlfoundation.github.io/oneCCL/env-variables.html#ccl-ze-ipc-exchange
+#export CCL_ZE_IPC_EXCHANGE=sockets
+export CCL_ZE_IPC_EXCHANGE=pidfd
+
+EOF
+
+cat <<EOF >>${MACOS_SETUP}
+# Initialise environment variables that may be used at run time.
+# Define network interface.
+export GLOO_SOCKET_IFNAME="en0"
 
 EOF
 
