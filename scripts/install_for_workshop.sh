@@ -22,9 +22,9 @@ mkdir -p ${USER_RDS}
 SCRIPTS_HOME=${WORKSHOP_HOME}/scripts
 INSTALL_RDS=${USER_RDS}/install
 mkdir -p ${INSTALL_RDS}
-INSTALL_SCRIPTS="miniforge3_install.sh mlvenv_dawn.sh ai_install.sh"
+INSTALL_SCRIPTS="miniforge3_install.sh practical-ml-with-pytorch_install.sh ai_install.sh"
 for INSTALL_SCRIPT in ${INSTALL_SCRIPTS}; do
-    cp ${SCRIPTS_HOME}/${INSTALL_SCRIPT} ${INSTALL_RDS}
+    cp ${SCRIPTS_HOME}/${INSTALL_SCRIPT}_install.sh ${INSTALL_RDS}
 done
 
 # Link default user directory for Jupyter kernels
