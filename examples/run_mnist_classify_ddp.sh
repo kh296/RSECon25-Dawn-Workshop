@@ -71,6 +71,9 @@ fi
 SLURM_NTASKS=$((${SLURM_NNODES}*${SLURM_NTASKS_PER_NODE}))
 
 # Determine number of CPU cores per task.
+if [[ -z "${SLURM_CPUS_ON_NODE}" ]]; then
+    SLURM_CPUS_ON_NODE=1
+fi
 export SLURM_CPUS_PER_TASK=$((${SLURM_CPUS_ON_NODE}/${SLURM_NTASKS_PER_NODE}))
 
 # Ensure that value assigned to SLURM_JOB_NODELIST.
@@ -95,59 +98,51 @@ echo ""
 echo ${SETUP}
 ${SETUP}
 
-# Set Intel MPI/OFI related environment variables.
-
-# export I_MPI_OFFLOAD=1
-# export I_MPI_OFFLOAD_SYMMETRIC=0
-
-# See: https://www.osc.edu/supercomputing/batch-processing-at-osc/slurm_migration/slurm_migration_issues
-unset I_MPI_PMI_LIBRARY
-export I_MPI_JOB_RESPECT_PROCESS_PLACEMENT=0
-
-# Avoid CCL warning:
-# [CCL_WARN] CCL_CONFIGURATION_PATH_modshare=:1 is unknown to and unused by
-# oneCCL code but is present in the environment, check if it is not mistyped.
-unset CCL_CONFIGURATION_PATH_modshare
-
-# Avoid CCL warnings:
-# |CCL_WARN| the number of workers (1) matches the number of available cores
-# per process, this may lead to contention between workers and application
-# threads
-# |CCL_WARN| workers are disabled, to forcibly enable them
-# set CCL_WORKER_OFFLOAD=1
-#
-# Note: setting CCL_WORKER_OFFLOAD=1 slows down processing.
-export CCL_WORKER_OFFLOAD=1
-
-# Use sockets instead of drmfd.
-# See: https://uxlfoundation.github.io/oneCCL/env-variables.html#ccl-ze-ipc-exchange
-#export CCL_ZE_IPC_EXCHANGE=sockets
-export CCL_ZE_IPC_EXCHANGE=pidfd
-
 # Ensure that data needed are downloaded before running application.
 echo ""
-echo "Checking/downloading dataset"
+echo "Downloading/checking dataset"
 T3=${SECONDS}
 python -c "import torchvision as tv; tv.datasets.MNIST('data', download=True)"
-echo "Time checking/downloading dataset: $((${SECONDS}-${T3})) seconds"
+echo "Time downloading/checking dataset: $((${SECONDS}-${T3})) seconds"
 
 # Generate file of host names.
-scontrol show hostnames $SLURM_JOB_NODELIST > mpi_hostfile.txt
+if command -v scontrol 1>/dev/null 2>&1; then
+    HOSTS="$(echo $(scontrol show hostnames ${SLURM_JOB_NODELIST})\
+        | sed 's/ /,/g')"
+    DIST_URL="${HOSTS%%,*}"
+else
+    HOSTS="${SLURM_JOB_NODELIST}"
+    DIST_URL="127.0.0.1"
+    DIST_URL="localhost"
+fi
 echo ""
 echo "Node(s) used:"
-cat mpi_hostfile.txt
+echo "${HOSTS}"
 
 # Exclamation mark used to avoid forced exit (with set -e)
 # when read reaches end of stream (non-zero return code).
-! read -r -d "" CMD << EOS
-mpiexec -n ${SLURM_NTASKS} -ppn ${SLURM_NTASKS_PER_NODE} -f mpi_hostfile.txt\
- python mnist_classify_ddp.py\
+PYTHON_LAUNCH="python mnist_classify_ddp.py"
+if command -v mpiexec 1>/dev/null 2>&1; then
+    MPI_LAUNCH="mpiexec -n ${SLURM_NTASKS} "
+    if [[ $(mpiexec --version) == *"Open MPI"* ]]; then
+        MPI_LAUNCH+="-N ${SLURM_NTASKS_PER_NODE} --host ${HOSTS}"
+    else
+        MPI_LAUNCH+="-ppn ${SLURM_NTASKS_PER_NODE} --hosts ${HOSTS}"
+    fi
+    LAUNCH="${MPI_LAUNCH} ${PYTHON_LAUNCH}"
+else
+    LAUNCH=${PYTHON_LAUNCH}
+fi
+LAUNCH=${PYTHON_LAUNCH}
+! read -r -d "" PYTHON_OPTS << EOS
  --ntasks-per-node ${SLURM_NTASKS_PER_NODE}\
- --dist-url $(head -n1 mpi_hostfile.txt)\
+ --dist-url ${DIST_URL}\
  --dist-port $(( (SLURM_JOB_ID % 10000) + 50000 ))\
  --cpus-per-task ${SLURM_CPUS_PER_TASK}\
- --epochs 1
+ --epochs 1\
+ --no-mps
 EOS
+CMD="${LAUNCH} ${PYTHON_OPTS}"
 echo
 echo "${CMD}"
 echo

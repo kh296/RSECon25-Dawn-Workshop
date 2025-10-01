@@ -130,6 +130,8 @@ def main():
                         help='disables CUDA training')
     parser.add_argument('--no-xpu', action='store_true', default=False,
                         help='disables Intel GPU training')
+    parser.add_argument('--no-mps', action='store_true', default=False,
+                        help='disables MPS GPU training')
     parser.add_argument('--dry-run', action='store_true', default=False,
                         help='quickly check a single pass')
     parser.add_argument('--seed', type=int, default=1, metavar='S',
@@ -140,9 +142,9 @@ def main():
                         help='For Saving the current Model')
     args = parser.parse_args()
 
-    backends = {"cpu": "gloo", "cuda": "nccl"}
+    backends = {"cpu": "gloo", "cuda": "nccl", "mps": ""}
     backends["xpu"] = "xccl" if torch.distributed.is_xccl_available() else "ccl"
-    for device_type in ["cuda", "xpu"]:
+    for device_type in ["cuda", "xpu", "mps", "cpu"]:
         if getattr(args, f"no_{device_type}", False):
             continue
         try:
@@ -160,12 +162,12 @@ def main():
     
     train_kwargs = {'batch_size': args.batch_size}
     test_kwargs = {'batch_size': args.test_batch_size}
-    if "cuda" == device_type:
-        cuda_kwargs = {'num_workers': args.cpus_per_task,
-                       'pin_memory': True,
-                       'shuffle': True}
-        train_kwargs.update(cuda_kwargs)
-        test_kwargs.update(cuda_kwargs)
+    if device_type in ["cuda", "xpu"]:
+        gpu_kwargs = {'num_workers': args.cpus_per_task,
+                      'pin_memory': True,
+                      'shuffle': True}
+        train_kwargs.update(gpu_kwargs)
+        test_kwargs.update(gpu_kwargs)
 
     transform=transforms.Compose([
         transforms.ToTensor(),
@@ -182,30 +184,29 @@ def main():
 
     world_size = int(os.environ.get("PMI_SIZE", 1))
     rank = int(os.environ.get("PMI_RANK", 0))
-
-    setup(backends[device_type],
-          rank, world_size, args.dist_url, args.dist_port)
-
     local_rank = rank - args.ntasks_per_node * (rank // args.ntasks_per_node)
     current_device = f"{device_type}:{local_rank}"
-    device_module.set_device(current_device)
     print(f"host+device: {gethostname()}+{current_device}, "
             f"rank: {rank}, local_rank: {local_rank}, ", flush=True)
+
+    if backends[device_type]:
+        setup(backends[device_type],
+              rank, world_size, args.dist_url, args.dist_port)
+
+        device_module.set_device(current_device)
 
     train_sampler = torch.utils.data.distributed.DistributedSampler(
             dataset1,
             num_replicas=world_size,
             rank=rank)
     train_loader = torch.utils.data.DataLoader(dataset1,
-                                               batch_size=args.batch_size,
                                                sampler=train_sampler,
-                                               num_workers=args.cpus_per_task,
-                                               pin_memory=True)
+                                               **train_kwargs)
 
     test_loader = torch.utils.data.DataLoader(dataset2,
                                               **test_kwargs)
     model = Net().to(current_device)
-    ddp_model = DDP(model, device_ids=[current_device])
+    ddp_model = DDP(model) if backends[device_type] else model
     optimizer = optim.Adadelta(ddp_model.parameters(), lr=args.lr)
 
     scheduler = StepLR(optimizer, step_size=1, gamma=args.gamma)
@@ -217,7 +218,8 @@ def main():
     if args.save_model and rank == 0:
         torch.save(model.state_dict(), "mnist_cnn.pt")
 
-    dist.destroy_process_group()
+    if backends[device_type]:
+        dist.destroy_process_group()
 
 
 if __name__ == '__main__':
