@@ -2,7 +2,7 @@
 # Script for copying workshop setup scripts and kernels.
 WORKSHOP_RDS="${HOME}/rds/rds-rsecon/rsecon25-dawn-workshop"
 
-# Copyt setup scripts.
+# Copy setup scripts.
 mkdir -p ../envs
 cp ${WORKSHOP_RDS}/envs/*setup.sh ../envs
 
