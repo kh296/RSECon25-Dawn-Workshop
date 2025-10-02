@@ -74,7 +74,7 @@ rm -rf ${VENV_DIR}
 python -m venv --system-site-packages ${VENV_DIR}
 #sed -i "s@${HOME}@\${HOME}@g" ${VENV_DIR}/bin/activate
 source "${VENV_DIR}/bin/activate"
-echo "${VENV_DIR}/bin/activate" >> ${SETUP}
+echo "source ${VENV_DIR}/bin/activate" >> ${SETUP}
 python -m pip install --upgrade pip
 
 # Clone project, and install packages in virtual environment.
