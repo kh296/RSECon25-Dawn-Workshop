@@ -37,19 +37,18 @@ CONDA_HOME="${HOME}/${CONDA_ENV,,}"
 CONDA_RDS="${HOME}/rds/rds-rsecon/rsecon25-dawn-workshop/${CONDA_ENV,,}"
 rm -rf "${CONDA_RDS}"
 rm -rf "${CONDA_HOME}"
-mkdir -p "${CONDA_RDS}"
 ln -s "${CONDA_RDS}" "${CONDA_HOME}"
 
 # Download and run the installation script.
 INSTALL_SCRIPT="Miniforge3-$(uname)-$(uname -m).sh"
 rm -rf "${INSTALL_SCRIPT}"
 wget "https://github.com/conda-forge/miniforge/releases/latest/download/${INSTALL_SCRIPT}"
-bash "${INSTALL_SCRIPT}" -b -u -p "${CONDA_HOME}"
+bash "${INSTALL_SCRIPT}" -b -p ${CONDA_RDS}
 rm "${INSTALL_SCRIPT}"
 
 # Update to latest conda version.
-source ${CONDA_HOME}/bin/activate
-conda update -n base -c conda-forge conda -y
+#source ${CONDA_HOME}/bin/activate
+#conda update -n base -c conda-forge conda -y
 
 # Report installation time.
 echo ""
