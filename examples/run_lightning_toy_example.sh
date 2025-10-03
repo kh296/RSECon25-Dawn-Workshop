@@ -72,7 +72,11 @@ unset SLURM_MEM_PER_NODE
 SLURM_EXPORT_ENV=ALL
 
 # Perform environment setup.
-SETUP_SCRIPT="../envs/ai-setup.sh"
+WORKSHOP_HOME=$(cd $(dirname "$0")/..; pwd)
+if [[ ${WORKSHOP_HOME} == /var/spool/* ]]; then
+    WORKSHOP_HOME=$(dirname $(pwd))
+fi
+SETUP_SCRIPT="${WORKSHOP_HOME}/envs/ai-setup.sh"
 SETUP="source ${SETUP_SCRIPT}"
 echo ${SETUP}
 ${SETUP}
@@ -83,19 +87,20 @@ APP="lightning_toy_example.py"
 if command -v srun 1>/dev/null 2>&1
 then
     # List nodes allocated.
+    SRUN_ONE_PER_NODE="srun --nodes=${SLURM_NNODES} --ntasks-per-node=1"
     echo "Nodes used:"
-    srun --nodes=${SLURM_NNODES} --ntasks-per-node=1 hostname
+    eval "${SRUN_ONE_PER_NODE} hostname"
     echo ""
     # Initial package import can be slow.  Perform before running
     # application, so that the initial time isn't included in
     # the application timing.
     echo "Performing initial import of lightning_xpu on each node"
     T2=${SECONDS}
-    srun python -c "import lightning_xpu"
+    eval "${SRUN_ONE_PER_NODE} python -c 'import lightning_xpu'"
     echo "Import time 1: $((${SECONDS}-${T2})) seconds"
     echo "Performing second import of lightning_xpu on each node"
     T2=${SECONDS}
-    srun python -c "import lightning_xpu"
+    eval "${SRUN_ONE_PER_NODE} python -c 'import lightning_xpu'"
     echo "Import time 2: $((${SECONDS}-${T2})) seconds"
     # Define command to run application.
     CMD="srun --nodes=${SLURM_NNODES} --ntasks-per-node=${SLURM_NTASKS_PER_NODE} python ${APP}"
@@ -123,6 +128,7 @@ echo "Time checking/downloading dataset: $((${SECONDS}-${T3})) seconds"
 
 # Run and time application.
 T4=${SECONDS}
+echo ""
 echo "Lightning run started: $(date)"
 echo "${CMD}"
 ${CMD}

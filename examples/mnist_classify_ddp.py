@@ -91,7 +91,7 @@ def test(model, device, test_loader):
 
     test_loss /= len(test_loader.dataset)
 
-    print('\nTest set: Average loss: {:.4f}, Accuracy: {}/{} ({:.0f}%)\n'.format(
+    print('\nTest set: Average loss: {:.4f}, Accuracy: {}/{} ({:.0f}%)'.format(
         test_loss, correct, len(test_loader.dataset),
         100. * correct / len(test_loader.dataset)))
 
@@ -164,8 +164,7 @@ def main():
     test_kwargs = {'batch_size': args.test_batch_size}
     if device_type in ["cuda", "xpu"]:
         gpu_kwargs = {'num_workers': args.cpus_per_task,
-                      'pin_memory': True,
-                      'shuffle': True}
+                      'pin_memory': True}
         train_kwargs.update(gpu_kwargs)
         test_kwargs.update(gpu_kwargs)
 

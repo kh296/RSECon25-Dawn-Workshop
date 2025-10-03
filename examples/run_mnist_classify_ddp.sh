@@ -92,18 +92,15 @@ unset SLURM_MEM_PER_NODE
 SLURM_EXPORT_ENV=ALL
 
 # Perform environment setup.
-SETUP_SCRIPT="../envs/ai-setup.sh"
+WORKSHOP_HOME=$(cd $(dirname "$0")/..; pwd)
+if [[ ${WORKSHOP_HOME} == /var/spool/* ]]; then
+    WORKSHOP_HOME=$(dirname $(pwd))
+fi
+SETUP_SCRIPT="${WORKSHOP_HOME}/envs/ai-setup.sh"
 SETUP="source ${SETUP_SCRIPT}"
 echo ""
 echo ${SETUP}
 ${SETUP}
-
-# Ensure that data needed are downloaded before running application.
-echo ""
-echo "Downloading/checking dataset"
-T3=${SECONDS}
-python -c "import torchvision as tv; tv.datasets.MNIST('data', download=True)"
-echo "Time downloading/checking dataset: $((${SECONDS}-${T3})) seconds"
 
 # Generate file of host names.
 if command -v scontrol 1>/dev/null 2>&1; then
@@ -122,26 +119,67 @@ echo "${HOSTS}"
 # Exclamation mark used to avoid forced exit (with set -e)
 # when read reaches end of stream (non-zero return code).
 PYTHON_LAUNCH="python mnist_classify_ddp.py"
-if command -v mpiexec 1>/dev/null 2>&1; then
+PYTHON_IMPORT_LAUNCH="python -c 'import torch; import torchvision; import torchaudio'"
+if command -v mpiexec -help 1>/dev/null 2>&1; then
     MPI_LAUNCH="mpiexec -n ${SLURM_NTASKS} "
+    MPI_IMPORT_LAUNCH="mpiexec -n ${SLURM_NNODES} "
     if [[ $(mpiexec --version) == *"Open MPI"* ]]; then
         MPI_LAUNCH+="-N ${SLURM_NTASKS_PER_NODE} --host ${HOSTS}"
+        MPI_IMPORT_LAUNCH+="-N 1 --host ${HOSTS}"
     else
         MPI_LAUNCH+="-ppn ${SLURM_NTASKS_PER_NODE} --hosts ${HOSTS}"
+        MPI_IMPORT_LAUNCH+="-ppn 1 --hosts ${HOSTS}"
     fi
     LAUNCH="${MPI_LAUNCH} ${PYTHON_LAUNCH}"
+    echo ""
+    # Initial package import can be slow.  Perform before running
+    # application, so that the initial time isn't included in
+    # the application timing.
+    echo "Performing initial import of torch on each node"
+    T2=${SECONDS}
+    CMD="${MPI_IMPORT_LAUNCH} ${PYTHON_IMPORT_LAUNCH}"
+    echo "${CMD}"
+    eval "${CMD}"
+    echo "Import time 1: $((${SECONDS}-${T2})) seconds"
+    echo "Performing second import of torch on each node"
+    T2=${SECONDS}
+    echo "${CMD}"
+    eval "${CMD}"
+    echo "Import time 2: $((${SECONDS}-${T2})) seconds"
 else
     LAUNCH=${PYTHON_LAUNCH}
+    echo ""
+    # Initial package import can be slow.  Perform before running
+    # application, so that the initial time isn't included in
+    # the application timing.
+    echo "Performing initial import of torch on each node"
+    T2=${SECONDS}
+    CMD="${PYTHON_IMPORT_LAUNCH}"
+    echo "${CMD}"
+    eval "${CMD}"
+    echo "Import time 1: $((${SECONDS}-${T2})) seconds"
+    echo "Performing second import of torch on each node"
+    T2=${SECONDS}
+    echo "${CMD}"
+    eval "${CMD}"
+    echo "Import time 2: $((${SECONDS}-${T2})) seconds"
 fi
-LAUNCH=${PYTHON_LAUNCH}
+
 ! read -r -d "" PYTHON_OPTS << EOS
  --ntasks-per-node ${SLURM_NTASKS_PER_NODE}\
  --dist-url ${DIST_URL}\
  --dist-port $(( (SLURM_JOB_ID % 10000) + 50000 ))\
  --cpus-per-task ${SLURM_CPUS_PER_TASK}\
- --epochs 1\
- --no-mps
+ --epochs 1
 EOS
+
+# Ensure that data needed are downloaded before running application.
+echo ""
+echo "Downloading/checking dataset"
+T3=${SECONDS}
+python -c "import torchvision as tv; tv.datasets.MNIST('data', download=True)"
+echo "Time downloading/checking dataset: $((${SECONDS}-${T3})) seconds"
+
 CMD="${LAUNCH} ${PYTHON_OPTS}"
 echo
 echo "${CMD}"
