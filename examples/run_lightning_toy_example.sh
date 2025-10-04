@@ -124,10 +124,10 @@ fi
 
 # Ensure that data needed are downloaded before running application.
 echo ""
-echo "Checking/downloading dataset"
+echo "Downloading/checking dataset"
 T3=${SECONDS}
 python -c "import torchvision as tv; tv.datasets.MNIST('.', download=True)"
-echo "Time checking/downloading dataset: $((${SECONDS}-${T3})) seconds"
+echo "Time downloading/checking dataset: $((${SECONDS}-${T3})) seconds"
 
 # Run and time application.
 T4=${SECONDS}
