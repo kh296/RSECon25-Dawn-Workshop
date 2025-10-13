@@ -16,17 +16,17 @@
 # This installation relies on the user having a conda installation
 # at ${CONDA_HOME}/bin/activate.  If not set by the user, CONDA_HOME
 # defaults to ${HOME}/miniforge3.  For instructions for installing
-# the miniforge3 flavour of conda, see: https://conda-forge.org/download/
+# the Miniforge3 flavour of conda, see: https://conda-forge.org/download/
 #
-# After installation, the environment for running pytorch,lightning, and/or
+# After installation, the environment for using pytorch, lightning, and/or
 # jax code can be activated by sourcing the file ai-setup.sh, created
-# in the directory ../envs relative to where the script is run.
+# in the directory ../envs relative to where the current script is run.
 #
-# On Dawn, this script may be run interactively on a compute node
+# On Dawn, the current script may be run interactively on a compute node
 # (not on a login node):
 # bash ./ai_install.sh
 # or it may be submitted from a login node to the Slurm batch system:
-# sbatch --acount=<project account> ./ai_install.sh
+# sbatch --account=<project account> ./ai_install.sh
 #
 
 # Exit at first failure.
@@ -86,27 +86,57 @@ cat <<EOF >>${DAWN_SETUP}
 # Load modules.
 module purge
 module load rhel9/default-dawn
-module load intel-oneapi-mkl
-module load intel-oneapi-compilers
+module load intel-oneapi-mkl/2025.1.0
+module load intel-oneapi-ccl/2021.15.0
+module load intel-oneapi-compilers/2025.1.0
 
-# Set Intel MPI/OFI related environment variables.
+#
+# Set some variables relevant to Intel MPI Library:
+# https://www.intel.com/content/www/us/en/docs/mpi-library/developer-reference-linux/2021-15/environment-variable-reference.html
+#
 
-# See: https://www.intel.com/content/www/us/en/docs/mpi-library/developer-reference-linux/2021-8/gpu-support.html
+# Set variables relating to GPU support.
+# See: https://www.intel.com/content/www/us/en/docs/mpi-library/developer-reference-linux/2021-15/gpu-support.html
+# Disable/enable GPU support (default: 0).
 export I_MPI_OFFLOAD=1
+# Enable/disable assumption that all buffers in an operation have the same type
+# (deault: 0).
 export I_MPI_OFFLOAD_SYMMETRIC=0
 
-# See: https://www.osc.edu/supercomputing/batch-processing-at-osc/slurm_migration/slurm_migration_issues
-unset I_MPI_PMI_LIBRARY
+# Set hydra environment variables.
+# See: https://www.intel.com/content/www/us/en/docs/mpi-library/developer-reference-linux/2021-15/hydra-environment-variables.html
+# Disable/enable process placement provided by job scheduler (default:1)
 export I_MPI_JOB_RESPECT_PROCESS_PLACEMENT=0
+# Set bootstrap server (default:"ssh")
+export I_MPI_HYDRA_BOOTSTRAP="ssh"
+
+#
+# Set some variables relevant to OneAPI collective communications library
+# (oneCCL):
+# https://uxlfoundation.github.io/oneCCL/env-variables.html#ccl-ze-ipc-exchange
+#
+
+# Select transport for inter-process communication (default: "mpi").
+# See: https://uxlfoundation.github.io/oneCCL/env-variables.html#ccl-atl-transport
+export CCL_ATL_TRANSPORT="ofi"
+
+# Set CCL log level (default: "warn").
+# See: https://uxlfoundation.github.io/oneCCL/env-variables.html#ccl-log-level
+export CCL_LOG_LEVEL="warn"
+
+# Set CCL process launcher (default: "hydra).
+# See: https://uxlfoundation.github.io/oneCCL/env-variables.html#ccl-process-launcher
+export CCL_PROCESS_LAUNCHER="hydra"
+
+# Set mechanism for CCL level zero inter-process communications
+# (default: pidfd).
+# See: https://uxlfoundation.github.io/oneCCL/env-variables.html#ccl-ze-ipc-exchange
+export CCL_ZE_IPC_EXCHANGE=pidfd
 
 # Avoid CCL warning:
 # [CCL_WARN] CCL_CONFIGURATION_PATH_modshare=:1 is unknown to and unused by
 # oneCCL code but is present in the environment, check if it is not mistyped.
 unset CCL_CONFIGURATION_PATH_modshare
-
-# Use sockets instead of drmfd.
-# See: https://uxlfoundation.github.io/oneCCL/env-variables.html#ccl-ze-ipc-exchange
-export CCL_ZE_IPC_EXCHANGE=pidfd
 
 EOF
 
@@ -180,7 +210,7 @@ cat <<EOF >>"${DAWN_CONDA_YML}"
     - --extra-index-url https://pypi.org/simple
 EOF
 cat <<EOF >>"${CONDA_YML}"
-# Package for IPython kernel creation.
+# IPython kernel creation
     - ipykernel
 # PyTorch
     - torch==2.8.0

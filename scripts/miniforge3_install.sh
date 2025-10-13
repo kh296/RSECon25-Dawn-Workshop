@@ -6,8 +6,8 @@
 #SBATCH --gres=gpu:1            # number of allocated gpus per node
 #SBATCH --time=00:30:00         # total run time limit (HH:MM:SS)
 
-# Script for making a fresh installing of the Miniforge3 flavour of conda,
-# as needed for shared use for the RSECon25 Dawn Workshop.
+# Script that creates a new installation of the Miniforge3 flavour of conda,
+# and enables the shared use as needed for the RSECon25 Dawn Workshop.
 # For information about miniforge, see:
 # https://github.com/conda-forge/miniforge
 
@@ -17,7 +17,8 @@
 # ${HOME}/miniforge
 # Warning: any pre-existing files at the above paths will be deleted.
 
-# This script may be run interactively on a Dawn login or compute node:
+# This script may be run interactively on a Dawn compute node
+# (not on a login node):
 # bash ./miniforge3_install.sh
 # or it may be run on the Slurm batch system:
 # sbatch --acount=<project account> ./miniforge3_install.sh
@@ -32,7 +33,7 @@ echo "Installation of ${CONDA_ENV} started on $(hostname): $(date)"
 echo ""
 
 # Delete any pre-existing conda installation,
-# and link default top-level location to user subdirectory of rds-rsecon.
+# and link default top-level location to workshop subdirectory of rds-rsecon.
 CONDA_HOME="${HOME}/${CONDA_ENV,,}"
 CONDA_RDS="${HOME}/rds/rds-rsecon/rsecon25-dawn-workshop/${CONDA_ENV,,}"
 rm -rf "${CONDA_RDS}"
@@ -47,8 +48,8 @@ bash "${INSTALL_SCRIPT}" -b -p ${CONDA_RDS}
 rm "${INSTALL_SCRIPT}"
 
 # Update to latest conda version.
-#source ${CONDA_HOME}/bin/activate
-#conda update -n base -c conda-forge conda -y
+source ${CONDA_HOME}/bin/activate
+conda update -n base -c conda-forge conda -y
 
 # Report installation time.
 echo ""
