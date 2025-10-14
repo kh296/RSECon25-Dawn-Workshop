@@ -1,9 +1,6 @@
 #/bin/bash
 # Script for copying workshop setup scripts and kernels.
-WORKSHOP_HOME=$(cd $(dirname "$0")/..; pwd)
-if [[ ${WORKSHOP_HOME} == /var/spool/* ]]; then
-    WORKSHOP_HOME=$(dirname $(pwd))
-fi
+WORKSHOP_HOME=$(cd $(dirname "${BASH_SOURCE[0]}")/..; pwd)
 WORKSHOP_RDS="${HOME}/rds/rds-rsecon/rsecon25-dawn-workshop"
 
 # Copy setup scripts.
