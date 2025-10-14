@@ -1,10 +1,14 @@
 #/bin/bash
 # Script for copying workshop setup scripts and kernels.
+WORKSHOP_HOME=$(cd $(dirname "$0")/..; pwd)
+if [[ ${WORKSHOP_HOME} == /var/spool/* ]]; then
+    WORKSHOP_HOME=$(dirname $(pwd))
+fi
 WORKSHOP_RDS="${HOME}/rds/rds-rsecon/rsecon25-dawn-workshop"
 
 # Copy setup scripts.
-mkdir -p ../envs
-cp ${WORKSHOP_RDS}/envs/*setup.sh ../envs
+mkdir -p ${WORKSHOP_HOME}/envs
+cp ${WORKSHOP_RDS}/envs/*setup.sh ${WORKSHOP_HOME}/envs
 
 # Link to shared miniforge3 directory.
 rm -rf ~/miniforge3
