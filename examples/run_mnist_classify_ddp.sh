@@ -61,10 +61,18 @@ fi
 
 # Determine number of tasks per node, with one task per GPU root device,
 # or defaulting to 1 if there are no GPUs.
+# Where GPUs are present, set affinity mask to match number of root devices.
 if [[ -z "${SLURM_GPUS_ON_NODE}" ]]; then
     SLURM_NTASKS_PER_NODE=1
 else
     SLURM_NTASKS_PER_NODE=$((${SLURM_GPUS_ON_NODE}*${DEVICES_PER_GPU}))
+    if [[ -z "${ZE_AFFINITY_MASK}" ]]; then
+        if [[ ${SLURM_NTASKS_PER_NODE} -gt 1 ]]; then
+            export ZE_AFFINITY_MASK=$(seq -s, 0 $((${SLURM_NTASKS_PER_NODE}-1)))
+        else
+            export ZE_AFFINITY_MASK=0
+        fi
+    fi
 fi
 
 # Determine total number of tasks.
