@@ -113,6 +113,8 @@ export ZE_AFFINITY_MASK="0,1,2,3,4,5,6,7"
 # See: https://www.intel.com/content/www/us/en/docs/mpi-library/developer-reference-linux/2021-15/gpu-support.html
 # Disable/enable GPU support (default: 0).
 export I_MPI_OFFLOAD=1
+# Disable/enable GPU pinning (default: 0).
+export I_MPI_OFFLOAD_PIN=1
 # Enable/disable assumption that all buffers in an operation have the same type
 # (deault: 0).
 export I_MPI_OFFLOAD_SYMMETRIC=0
@@ -122,7 +124,12 @@ export I_MPI_OFFLOAD_SYMMETRIC=0
 # Disable/enable process placement provided by job scheduler (default:1)
 export I_MPI_JOB_RESPECT_PROCESS_PLACEMENT=0
 # Set bootstrap server (default:"ssh")
-export I_MPI_HYDRA_BOOTSTRAP="ssh"
+export I_MPI_HYDRA_BOOTSTRAP="slurm"
+
+# Configure debug output.
+# See: https://www.intel.com/content/www/us/en/docs/mpi-library/developer-reference-linux/2021-15/other-environment-variables.html
+# See: https://www.intel.com/content/www/us/en/docs/oneapi/optimization-guide-gpu/2024-0/intel-mpi-for-gpu-clusters.html
+export I_MPI_DEBUG=0
 
 #
 # Set some variables relevant to OneAPI collective communications library
@@ -146,6 +153,23 @@ export CCL_PROCESS_LAUNCHER="hydra"
 # (default: pidfd).
 # See: https://uxlfoundation.github.io/oneCCL/env-variables.html#ccl-ze-ipc-exchange
 export CCL_ZE_IPC_EXCHANGE=pidfd
+
+# Define filters for selection multiple network interfaces cards (NICs).
+# See:
+# https://uxlfoundation.github.io/oneCCL/env-variables.html#multi-nic
+#
+# Control multi-NIC selection by NIC locality.
+# See: https://uxlfoundation.github.io/oneCCL/env-variables.html#ccl-ze-ipc-exchange
+# export CCL_MNIC="none"
+#
+# Control multi-NIC selection by NIC names.
+# See: https://uxlfoundation.github.io/oneCCL/env-variables.html#ccl-mnic-name
+#export CCL_MNIC_NAME=
+#
+# Specify the maximum number of NICs to be selected.
+# https://uxlfoundation.github.io/oneCCL/env-variables.html#ccl-mnic-count
+#export CCL_MNIC_COUNT=
+
 
 # Avoid CCL warning:
 # [CCL_WARN] CCL_CONFIGURATION_PATH_modshare=:1 is unknown to and unused by
