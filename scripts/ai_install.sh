@@ -91,6 +91,20 @@ module load intel-oneapi-ccl/2021.15.0
 module load intel-oneapi-compilers/2025.1.0
 
 #
+# Set level-zero environment variables:
+# https://oneapi-src.github.io/level-zero-spec/level-zero/latest/core/PROG.html#environment-variables
+#
+
+# Define device hierarchy model and affinity mask.
+# See: https://www.intel.com/content/www/us/en/developer/articles/technical/flattening-gpu-tile-hierarchy.html
+# Define whether a GPU is treated as a single root device ("COMPOSITE")
+# or as a root device per stack ("FLAT").
+export ZE_FLAT_DEVICE_HIERARCHY="FLAT"
+# Define root devices per node to be made visible to applications.
+# (Dawn has 4 GPUs per node, and two stacks per GPU.)
+export ZE_AFFINITY_MASK="0,1,2,3,4,5,6,7"
+
+#
 # Set some variables relevant to Intel MPI Library:
 # https://www.intel.com/content/www/us/en/docs/mpi-library/developer-reference-linux/2021-15/environment-variable-reference.html
 #
