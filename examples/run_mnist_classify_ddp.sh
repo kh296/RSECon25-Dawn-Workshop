@@ -66,12 +66,10 @@ if [[ -z "${SLURM_GPUS_ON_NODE}" ]]; then
     SLURM_NTASKS_PER_NODE=1
 else
     SLURM_NTASKS_PER_NODE=$((${SLURM_GPUS_ON_NODE}*${DEVICES_PER_GPU}))
-    if [[ -z "${ZE_AFFINITY_MASK}" ]]; then
-        if [[ ${SLURM_NTASKS_PER_NODE} -gt 1 ]]; then
-            export ZE_AFFINITY_MASK=$(seq -s, 0 $((${SLURM_NTASKS_PER_NODE}-1)))
-        else
-            export ZE_AFFINITY_MASK=0
-        fi
+    if [[ ${SLURM_NTASKS_PER_NODE} -gt 1 ]]; then
+        export ZE_AFFINITY_MASK=$(seq -s, 0 $((${SLURM_NTASKS_PER_NODE}-1)))
+    else
+        export ZE_AFFINITY_MASK=0
     fi
 fi
 
