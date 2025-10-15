@@ -110,7 +110,7 @@ echo ""
 echo ${SETUP}
 ${SETUP}
 
-# Generate file of host names.
+# Create list of host names.
 if command -v scontrol 1>/dev/null 2>&1; then
     HOSTS="$(echo $(scontrol show hostnames ${SLURM_JOB_NODELIST})\
         | sed 's/ /,/g')"
@@ -124,8 +124,10 @@ echo ""
 echo "Node(s) used:"
 echo "${HOSTS}"
 
-# Exclamation mark used to avoid forced exit (with set -e)
-# when read reaches end of stream (non-zero return code).
+# Define launch commands, and perform initial module imports on each node.
+# (Initial imports can be slow.  They aren't essential here, and are performed
+# before running the application only so that so that the time for the initial
+# imports isn't included in the application timing.
 PYTHON_LAUNCH="python mnist_classify_ddp.py"
 PYTHON_IMPORT_LAUNCH="python -c 'import torch; import torchvision; import torchaudio'"
 if command -v mpiexec -help 1>/dev/null 2>&1; then
@@ -140,9 +142,6 @@ if command -v mpiexec -help 1>/dev/null 2>&1; then
     fi
     LAUNCH="${MPI_LAUNCH} ${PYTHON_LAUNCH}"
     echo ""
-    # Initial package import can be slow.  Perform before running
-    # application, so that the initial time isn't included in
-    # the application timing.
     echo "Performing initial import of torch on each node"
     T2=${SECONDS}
     CMD="${MPI_IMPORT_LAUNCH} ${PYTHON_IMPORT_LAUNCH}"
@@ -173,6 +172,9 @@ else
     echo "Import time 2: $((${SECONDS}-${T2})) seconds"
 fi
 
+# Define options to be passed to application.
+# Exclamation mark used to avoid forced exit (with set -e)
+# when read reaches end of stream (non-zero return code).
 ! read -r -d "" PYTHON_OPTS << EOS
  --ntasks-per-node ${SLURM_NTASKS_PER_NODE}\
  --dist-url ${DIST_URL}\
@@ -188,8 +190,15 @@ T3=${SECONDS}
 python -c "import torchvision as tv; tv.datasets.MNIST('data', download=True)"
 echo "Time downloading/checking dataset: $((${SECONDS}-${T3})) seconds"
 
+# Run and time application.
+T4=${SECONDS}
 CMD="${LAUNCH} ${PYTHON_OPTS}"
-echo
+echo ""
+echo "PyTorch DDP run started: $(date)"
 echo "${CMD}"
-echo
 ${CMD}
+echo ""
+echo "PyTorch DDP run completed: $(date)"
+echo "Run time: $((${SECONDS}-${T4})) seconds"
+echo ""
+echo "Job time: $((${SECONDS}-${T1})) seconds"
