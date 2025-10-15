@@ -170,7 +170,7 @@ EOF
 
 # Set up installation environment.
 source ${SETUP}
-#conda update -n base -c conda-forge conda
+conda update -n base -c conda-forge conda
 
 # Create system-dependent installation file.
 #
