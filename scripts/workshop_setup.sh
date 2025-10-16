@@ -19,3 +19,11 @@ cp -r ${JUPYTER_KERNELS_RDS}/* ${JUPYTER_KERNELS_HOME}
 for VENV in $(ls ${JUPYTER_KERNELS_HOME}); do
     sed -i "s@/.*/rds/@${HOME}/rds/@g" ${JUPYTER_KERNELS_HOME}/${VENV}/kernel.json
 done
+
+# Clone repository with examples.
+ML_HOME=${WORKSHOP_HOME}/projects/practical-ml-with-pytorch
+if [ ! -d ${ML_HOME} ]; then
+  mkdir -p ${ML_HOME}
+  git clone https://github.com/kh296/practical-ml-with-pytorch ${ML_HOME}
+  git -C ${ML_HOME} checkout xpu
+fi
