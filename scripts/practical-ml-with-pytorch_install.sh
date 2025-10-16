@@ -71,7 +71,7 @@ fi
 VENV_DIR=$(realpath ..)/venvs/${ENV_NAME}
 mkdir -p ${VENV_DIR}
 rm -rf ${VENV_DIR}
-python -m venv --system-site-packages ${VENV_DIR}
+python -m venv ${VENV_DIR}
 #sed -i "s@${HOME}@\${HOME}@g" ${VENV_DIR}/bin/activate
 source "${VENV_DIR}/bin/activate"
 echo "source ${VENV_DIR}/bin/activate" >> ${SETUP}
