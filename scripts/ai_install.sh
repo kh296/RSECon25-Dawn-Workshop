@@ -4,7 +4,7 @@
 #SBATCH --partition=pvc9        # cluster partition to be used
 #SBATCH --nodes=1               # number of nodes
 #SBATCH --gres=gpu:1            # number of allocated gpus per node
-#SBATCH --time=02:00:00         # total run time limit (HH:MM:SS)
+#SBATCH --time=04:00:00         # total run time limit (HH:MM:SS)
 
 # Script for installing AI frameworks, for use on Dawn supercomputer,
 # and on other systems.  This includes installation of pytorch (version 2.8),
