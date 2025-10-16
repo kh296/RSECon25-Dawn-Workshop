@@ -71,7 +71,7 @@ fi
 VENV_DIR=$(realpath ..)/venvs/${ENV_NAME}
 mkdir -p ${VENV_DIR}
 rm -rf ${VENV_DIR}
-python -m venv ${VENV_DIR}
+python -m venv --system-site-packages ${VENV_DIR}
 #sed -i "s@${HOME}@\${HOME}@g" ${VENV_DIR}/bin/activate
 source "${VENV_DIR}/bin/activate"
 echo "source ${VENV_DIR}/bin/activate" >> ${SETUP}
@@ -85,7 +85,8 @@ cd ${PROJECTS_DIR}
 git clone https://github.com/kh296/${ENV_NAME}
 cd ${ENV_NAME}
 git checkout xpu
-pip install --index-url https://download.pytorch.org/whl/xpu --extra-index-url https://pypi.org/simple . ipywidgets
+pip install --index-url https://download.pytorch.org/whl/xpu torch==2.8.0 torchvision==0.23.0 numpy<2.0.0
+pip install --index-url https://pypi.org/simple . ipywidgets
 
 # Perform initial import.
 python -c "import ml_workshop"
