@@ -1,7 +1,8 @@
 #/bin/bash
 # Script for copying workshop setup scripts and kernels.
 WORKSHOP_HOME=$(cd $(dirname "${BASH_SOURCE[0]}")/..; pwd)
-WORKSHOP_RDS="${HOME}/rds/rds-rsecon/rsecon25-dawn-workshop"
+#WORKSHOP_RDS="${HOME}/rds/rds-rsecon/rsecon25-dawn-workshop"
+WORKSHOP_RDS="/rds/project/rds-Om6DXPhIBgg/rsecon25-dawn-workshop"
 
 # Copy setup scripts.
 mkdir -p ${WORKSHOP_HOME}/envs
