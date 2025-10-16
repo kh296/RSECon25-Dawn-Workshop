@@ -20,11 +20,11 @@ rm -rf ${WORKSHOP_RDS}
 mkdir -p ${WORKSHOP_RDS}
 
 SCRIPTS_HOME=${WORKSHOP_HOME}/scripts
-INSTALL_RDS=${WORKSHOP_RDS}/install
-mkdir -p ${INSTALL_RDS}
+SCRIPTS_RDS=${WORKSHOP_RDS}/scripts
+mkdir -p ${SCRIPTS_RDS}
 INSTALL_SCRIPTS="miniforge3_install.sh practical-ml-with-pytorch_install.sh ai_install.sh"
 for INSTALL_SCRIPT in ${INSTALL_SCRIPTS}; do
-    cp ${SCRIPTS_HOME}/${INSTALL_SCRIPT} ${INSTALL_RDS}
+    cp ${SCRIPTS_HOME}/${INSTALL_SCRIPT} ${SCRIPTS_RDS}
 done
 
 # Link default user directory for Jupyter kernels
@@ -40,7 +40,7 @@ rm -rf ${JUPYTER_KERNELS_RDS}
 mkdir -p ${JUPYTER_KERNELS_RDS}
 ln -s ${JUPYTER_KERNELS_RDS} ${JUPYTER_KERNELS_HOME}
 
-cd ${INSTALL_RDS}
+cd ${SCRIPTS_RDS}
 for INSTALL_SCRIPT in ${INSTALL_SCRIPTS}; do
     echo ""
     ./${INSTALL_SCRIPT}
