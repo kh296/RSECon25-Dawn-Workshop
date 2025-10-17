@@ -85,8 +85,14 @@ cd ${PROJECTS_DIR}
 git clone https://github.com/kh296/${ENV_NAME}
 cd ${ENV_NAME}
 git checkout xpu
-pip install --index-url https://download.pytorch.org/whl/xpu torch==2.8.0 torchvision==0.23.0 numpy<2.0.0
-pip install --index-url https://pypi.org/simple . ipywidgets
+PACKAGES1="torch==2.8.0 torchvision==0.23.0 numpy<2.0.0"
+PACKAGES2=". ipywidgets"
+if [[ "Dawn" == "${SYSTEM}" ]]; then
+    pip install --index-url https://download.pytorch.org/whl/xpu ${PACKAGES1}
+    pip install --index-url https://pypi.org/simple ${PACKAGES2}
+else
+    pip install --index-url https://pypi.org/simple ${PACKAGES1} ${PACKAGES2}
+fi
 
 # Perform initial import.
 python -c "import ml_workshop"
