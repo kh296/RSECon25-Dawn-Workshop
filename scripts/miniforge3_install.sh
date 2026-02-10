@@ -7,15 +7,24 @@
 #SBATCH --time=00:30:00         # total run time limit (HH:MM:SS)
 
 # Script that creates a new installation of the Miniforge3 flavour of conda,
-# and enables the shared use as needed for the RSECon25 Dawn Workshop.
+# optionally creating a link to this installation.
 # For information about miniforge, see:
 # https://github.com/conda-forge/miniforge
 
-# This script installs to:
-# ${HOME}/rds/rds-rsecon/rsecon25-dawn-workshop/miniforge3
+# By default:
+# If the directory ${HOME}/rds exists, this script installs to:
+# ${HOME}/rds/miniforge3
 # and creates a soft link to this directory from:
-# ${HOME}/miniforge
-# Warning: any pre-existing files at the above paths will be deleted.
+# ${HOME}/miniforge3
+# Otherwise, this script installs to:
+# ${HOME}/miniforge3
+# and no soft link to this directory is created.
+
+# Non-default installation directory and soft link can be set using
+# command line options: -i <install path> -l <link path>.
+
+# Warning: any pre-existing files at the installation and link paths
+# will be deleted.
 
 # This script may be run interactively on a Dawn compute node
 # (not on a login node):
@@ -26,29 +35,109 @@
 # Exit at first failure.
 set -e
 
+# Provide tilde expansion.
+expand_path() {
+    IN_PATH=$1
+    if [[ "${IN_PATH:0:1}" == "~" ]] ; then
+        for (( IDX=1; IDX<${#IN_PATH}; IDX++ )); do
+            if [[ "/" == "${IN_PATH:$IDX:1}" ]]; then
+                break
+            fi
+	done
+	OUT_PATH=~${LOCAL_PATH:1:$((IDX-1))}${LOCAL_PATH:${IDX}}
+    else
+        OUT_PATH=${IN_PATH}
+    fi
+    echo ${OUT_PATH}
+}
+
+# Define default installation.
+CONDA_ENV="Miniforge3"
+CONDA_ENV_LC="$(echo ${CONDA_ENV} | tr [:upper:] [:lower:])"
+
+CONDA_HOME=~/${CONDA_ENV_LC}
+if [ -d ~/rds/hpc-work/ ]; then
+    CONDA_INSTALL=~/rds/hpc-work/${CONDA_ENV_LC}
+    CONDA_LINK=${CONDA_HOME}
+else
+    CONDA_INSTALL=${CONDA_HOME}
+    CONDA_LINK=""
+fi
+
+# Parse command-line options.
+USAGE="usage: miniforge3_install [-h] [-i <install path>] [-l [<link path>]]"
+while getopts ":hri:l::" OPT; do
+    case "${OPT}" in
+        h)
+            echo "${USAGE}"
+	    echo "Options:"
+	    echo "    -h: Print this help."
+	    echo "    -i: Install to <install path>;"
+	    echo "    -l: Link <install path> to <link path>."
+	    echo "If -i omitted, installation is to $CONDA_INSTALL."
+	    if [ -n "${CONDA_LINK}" ]; then
+	        echo "If -l omitted, installation linked to $CONDA_LINK."
+            else
+	        echo "If -l omitted or <link path> unspecified, no link added."
+            fi
+	    exit 0
+            ;;
+        i)
+            CONDA_INSTALL=$(realpath "${OPTARG}")
+            CONDA_LINK="${CONDA_HOME}"
+            ;;
+        l)
+            if [ -z "${OPTARG}" ]; then
+                CONDA_LINK=""
+            else
+                CONDA_LINK=$(realpath "${OPTARG}")
+            fi
+            ;;
+        \? )
+            echo "Undefined option -${OPTARG}"
+            echo "${USAGE}"
+	    exit 1
+            ;;
+        : )
+            case "${OPTARG}" in
+                i)
+                    echo "Option -${OPTARG} requires argument"
+                    echo "${USAGE}"
+	            exit 1
+                    ;;
+                *)
+                    ;;
+            esac
+    esac
+done
+
+# Unset positional arguments.
+shift $#
+
 # Start timer.
 T0=${SECONDS}
-CONDA_ENV="Miniforge3"
 echo "Installation of ${CONDA_ENV} started on $(hostname): $(date)"
 echo ""
 
-# Delete any pre-existing conda installation,
-# and link default top-level location to workshop subdirectory of rds-rsecon.
-CONDA_HOME="${HOME}/${CONDA_ENV,,}"
-CONDA_RDS="${HOME}/rds/rds-rsecon/rsecon25-dawn-workshop/${CONDA_ENV,,}"
-rm -rf "${CONDA_RDS}"
-rm -rf "${CONDA_HOME}"
-ln -s "${CONDA_RDS}" "${CONDA_HOME}"
+# Delete any pre-existing conda installation.
+rm -rf "${CONDA_INSTALL}"
+rm -rf "${CONDA_LINK}"
 
 # Download and run the installation script.
 INSTALL_SCRIPT="Miniforge3-$(uname)-$(uname -m).sh"
 rm -rf "${INSTALL_SCRIPT}"
 wget "https://github.com/conda-forge/miniforge/releases/latest/download/${INSTALL_SCRIPT}"
-bash "${INSTALL_SCRIPT}" -b -p ${CONDA_RDS}
+eval "bash ${INSTALL_SCRIPT} -b -p ${CONDA_INSTALL}"
 rm "${INSTALL_SCRIPT}"
 
+# link CONDA_INSTALL to CONDA_LINK, if the latter is defined.
+if [ -n "${CONDA_LINK}" ]; then
+    ln -s "${CONDA_INSTALL}" "${CONDA_LINK}"
+fi
+
+
 # Update to latest conda version.
-source ${CONDA_HOME}/bin/activate
+source ${CONDA_INSTALL}/bin/activate
 conda update -n base -c conda-forge conda -y
 
 # Report installation time.
