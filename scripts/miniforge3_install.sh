@@ -130,17 +130,22 @@ wget "https://github.com/conda-forge/miniforge/releases/latest/download/${INSTAL
 eval "bash ${INSTALL_SCRIPT} -b -p ${CONDA_INSTALL}"
 rm "${INSTALL_SCRIPT}"
 
-# link CONDA_INSTALL to CONDA_LINK, if the latter is defined.
+# Ensure that CONDA_LINK is path to conda installation.
 if [ -n "${CONDA_LINK}" ]; then
     ln -s "${CONDA_INSTALL}" "${CONDA_LINK}"
+else
+    CONDA_LINK=${CONDA_INSTALL}
 fi
 
-
 # Update to latest conda version.
-source ${CONDA_INSTALL}/bin/activate
+source ${CONDA_LINK}/bin/activate
 conda update -n base -c conda-forge conda -y
 
 # Report installation time.
 echo ""
 echo "Installation of miniforge3 completed: $(date)"
 echo "Installation time: $((${SECONDS}-${T0})) seconds"
+
+echo ""
+echo "Set up environment for ${CONDA_ENV} with:"
+echo "source ${CONDA_LINK}/bin/activate"
